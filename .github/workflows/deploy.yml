@@ -39,7 +39,7 @@ jobs:
           # Remove the existing recipes in pan_press
           rm -rf pan_press/recipes
           # Copy the recipes from the cooking repository
-          cp -r . pan_press/recipes
+          cp -r recipes pan_press/recipes
           # Remove the .git directory to avoid conflicts
           rm -rf pan_press/recipes/.git
       
