@@ -1,0 +1,53 @@
+name: Deploy to GitHub Pages
+
+on:
+  # Trigger the workflow every time you push to the `main` branch
+  push:
+    branches: [ main ]
+  # Allows you to run this workflow manually from the Actions tab on GitHub.
+  workflow_dispatch:
+
+# Allow this job to clone the repo and create a page deployment
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout cooking repository
+        uses: actions/checkout@v4
+      
+      - name: Set up SSH deploy key
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.PAN_PRESS_DEPLOY_KEY }}
+      
+      - name: Add GitHub to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+      
+      - name: Clone private pan_press repository
+        run: |
+          git clone git@github.com:andoriyu/pan_press.git
+      
+      - name: Install, build, and upload your site
+        uses: withastro/action@v3
+        with:
+          path: pan_press/astro  # Path to the Astro project
+          node-version: 22  # Using Node.js version 22
+          package-manager: pnpm@latest  # Using pnpm as the package manager
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
