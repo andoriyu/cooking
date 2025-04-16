@@ -1,1 +1,3 @@
-cook
+# Ignore SSH keys
+pan_press_deploy_key
+pan_press_deploy_key.pub
