@@ -32,12 +32,10 @@ jobs:
         run: |
           # Remove the existing recipes directory in pan_press
           rm -rf pan_press/recipes
-          ls -ls
-          ls -ls pan_press
       - name: Checkout cooking repository
         uses: actions/checkout@v4
         with:
-          path: pan_press/recipes
+          path: pan_press/recipes/astro
       - name: Install, build, and upload your site
         uses: withastro/action@v3
         with:
