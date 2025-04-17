@@ -17,9 +17,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout cooking repository
-        uses: actions/checkout@v4
-      
       - name: Set up SSH deploy key
         uses: webfactory/ssh-agent@v0.7.0
         with:
@@ -34,21 +31,36 @@ jobs:
         run: |
           git clone git@github.com:andoriyu/pan_press.git
       
-      - name: Replace recipes
+      - name: Update recipes submodule to current commit
         run: |
-          # Remove the existing recipes in pan_press
-          rm -rf pan_press/recipes
-          # Copy the recipes from the cooking repository
-          cp -r recipes pan_press/recipes
-          # Remove the .git directory to avoid conflicts
-          rm -rf pan_press/recipes/.git
+          cd pan_press
+          # Use the GitHub SHA context variable for the current commit
+          COOKING_COMMIT="${{ github.sha }}"
+          echo "Updating recipes submodule to commit: $COOKING_COMMIT"
+          
+          # Update the submodule to point to the current commit
+          cd recipes
+          git fetch origin
+          git checkout $COOKING_COMMIT
+          cd ..
       
       - name: Install, build, and upload your site
         uses: withastro/action@v3
         with:
-          path: pan_press/astro  # Path to the Astro project
+          path: .  # Path is now the root folder
           node-version: 22  # Using Node.js version 22
           package-manager: pnpm@latest  # Using pnpm as the package manager
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 
   deploy:
     needs: build
