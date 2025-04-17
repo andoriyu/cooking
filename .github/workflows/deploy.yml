@@ -28,23 +28,24 @@ jobs:
       - name: Clone private pan_press repository
         run: |
           git clone git@github.com:andoriyu/pan_press.git
-      - name: Update recipes submodule to current commit
+      - name: Delete recipes
         run: |
-          cd pan_press
-          # Use the GitHub SHA context variable for the current commit
-          COOKING_COMMIT="${{ github.sha }}"
-          echo "Updating recipes submodule to commit: $COOKING_COMMIT"
-          # Update the submodule to point to the current commit
-          cd recipes
-          git fetch origin
-          git checkout $COOKING_COMMIT
-          cd ..
+          # Remove the existing recipes directory in pan_press
+          rm -rf pan_press/recipes
+      - name: Replace recipes directory in pan_press
+        run: |
+          # Remove the existing recipes directory in pan_press
+          rm -rf pan_press/recipes
+      - name: Checkout cooking repository
+        uses: actions/checkout@v4
+        with:
+          path: pan_press/recipes
       - name: Install, build, and upload your site
         uses: withastro/action@v3
         with:
-          path: .  # Path is now the root folder
-          node-version: 22  # Using Node.js version 22
-          package-manager: pnpm@latest  # Using pnpm as the package manager
+          path: pan_press
+          node-version: 22
+          package-manager: pnpm@latest
   deploy:
     needs: build
     runs-on: ubuntu-latest
