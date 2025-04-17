@@ -35,11 +35,11 @@ jobs:
       - name: Checkout cooking repository
         uses: actions/checkout@v4
         with:
-          path: pan_press/recipes/astro
+          path: pan_press/recipes
       - name: Install, build, and upload your site
         uses: withastro/action@v3
         with:
-          path: pan_press
+          path: pan_press/astro
           node-version: 22
           package-manager: pnpm@latest
   deploy:
