@@ -32,10 +32,8 @@ jobs:
         run: |
           # Remove the existing recipes directory in pan_press
           rm -rf pan_press/recipes
-      - name: Replace recipes directory in pan_press
-        run: |
-          # Remove the existing recipes directory in pan_press
-          rm -rf pan_press/recipes
+          ls -ls
+          ls -ls pan_press
       - name: Checkout cooking repository
         uses: actions/checkout@v4
         with:
