@@ -12,6 +12,7 @@ This document outlines the preferred style and formatting for recipes in this co
 
 - For food recipes, use the metric system (g, kg, ml, l)
 - For cocktail recipes, use imperial measurements (oz, tsp, tbsp)
+- For temperatures, use Fahrenheit (°F) in all recipes
 
 ## Metadata
 

@@ -26,9 +26,40 @@ nutrition:
   protein: 20g
   carbs: 30g
   fat: 10g
+  calories: 350
+  sugar: 5g
+  alcohol: 0%
 image: https://example.com/recipe-image.jpg
+source:
+  author: Recipe Author
+  url: https://example.com/original-recipe
+  youtube: https://youtube.com/watch?v=example
+verified: true
 ---
 ```
+
+### Metadata Fields TL;DR
+
+- **title**: Recipe name displayed as the main heading
+- **tags**: Categorization labels for filtering and organization
+- **servings**: Number of portions the recipe yields
+- **time**:
+  - **prep**: Time needed for preparation (include units)
+  - **cook**: Time needed for cooking (include units)
+- **difficulty**: Complexity level (easy, medium, hard)
+- **nutrition**: Nutritional information
+  - **protein**: Protein content (include units, typically g)
+  - **carbs**: Carbohydrate content (include units, typically g)
+  - **fat**: Fat content (include units, typically g)
+  - **calories**: Calorie content (numeric value, assumed to be kcal)
+  - **sugar**: Sugar content (include units, typically g)
+  - **alcohol**: Alcohol content (include percentage)
+- **image**: URL to recipe hero image
+- **source**: Attribution information
+  - **author**: Recipe creator (use "ai" for AI-generated recipes)
+  - **url**: Link to original recipe
+  - **youtube**: Link to related YouTube video
+- **verified**: Boolean indicating if recipe has been tested (true/false)
 
 ## Ingredients
 
