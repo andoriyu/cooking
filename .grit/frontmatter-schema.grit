@@ -1,0 +1,89 @@
+engine marzano(0.1)
+language yaml
+
+// ──────────────────────────────
+//  Required‑field validators
+// ──────────────────────────────
+pattern validTitle() {
+  // Title must start with a capital letter and contain only sensible ASCII chars
+  `title: $title` where {
+    $title <: r"^[A-Z][A-Za-z0-9 ',.&-]+$"
+  }
+}
+
+pattern validTags() {
+  // Need at least one tag; every tag must be lowercase letters / digits / hyphens
+  `tags:
+    $tags` where {
+    $tags <: some r"^[a-z0-9-]+$"
+  }
+}
+
+pattern validServings() {
+  `servings: $n` where { $n <: r"^[1-9][0-9]*$" }
+}
+
+pattern validDifficulty() {
+  `difficulty: $lvl` where { $lvl <: r"^(easy|medium|hard)$" }
+}
+
+// ──────────────────────────────
+//  Optional block: time
+//  (At least a prep time is required *if* the block exists.)
+// ──────────────────────────────
+pattern validTime() {
+  maybe `time: $body` where {
+    // Must contain a 'prep:' line; any other lines (cook, total, etc.) are fine
+    $body <: contains `prep: $prep`
+  }
+}
+
+// ──────────────────────────────
+//  Nutrition helpers
+//  (Each key is optional but, if present, must match its format.)
+// ──────────────────────────────
+pattern nutritionCalories() { `calories: $v` where { $v <: r"^[0-9]+$"  } }
+pattern nutritionProtein()  { `protein:  $v` where { $v <: r"^[0-9]+g$" } }
+pattern nutritionCarbs()    { `carbs:    $v` where { $v <: r"^[0-9]+g$" } }
+pattern nutritionFat()      { `fat:      $v` where { $v <: r"^[0-9]+g$" } }
+pattern nutritionSugar()    { `sugar:    $v` where { $v <: r"^[0-9]+g$" } }
+pattern nutritionAlcohol()  { `alcohol:  $v` where { $v <: r"^[0-9]+%$" } }
+
+// --------------- nutrition block ---------------
+pattern validNutrition() {
+  maybe `nutrition: $nut` where {
+    $nut <: maybe contains nutritionCalories(),
+    $nut <: maybe contains nutritionProtein(),
+    $nut <: maybe contains nutritionCarbs(),
+    $nut <: maybe contains nutritionFat(),
+    $nut <: maybe contains nutritionSugar(),
+    $nut <: maybe contains nutritionAlcohol()
+  }
+}
+
+// ──────────────────────────────
+//  Optional block: image URL
+// ──────────────────────────────
+pattern validImage() {
+  maybe `image: $url` where {
+    $url <: r"^https?://.+\\.(jpg|jpeg|png|webp)(\\?.*)?$"
+  }
+}
+
+// ──────────────────────────────
+//  Top‑level validator
+// ──────────────────────────────
+pattern validateRecipeFrontmatter() {
+  sequential {
+    validTitle(),
+    validTags(),
+    validServings(),
+    validDifficulty(),
+    validTime(),
+    validNutrition(),
+    validImage()
+  }
+}
+
+// Apply the validation pattern
+validateRecipeFrontmatter()
