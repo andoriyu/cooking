@@ -1,0 +1,82 @@
+name: Generate Timer Audio Files
+
+on:
+  push:
+    branches:
+      - main
+      - 'copilot/**'  # Run on all copilot branches for testing
+    paths:
+      - '**.cook'
+      - '**.cooklang'
+      - '__scripts/**'
+      - '.github/workflows/generate-timer-audio.yml'
+  workflow_dispatch:
+
+jobs:
+  generate-audio:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+      
+      - name: Setup Nix
+        uses: cachix/install-nix-action@v23
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+      
+      - name: Extract Timer Phrases
+        run: |
+          chmod +x __scripts/get-phrases.sh
+          __scripts/get-phrases.sh || {
+            echo "Failed to extract phrases, but continuing..."
+            echo "{}" > phrases.json
+          }
+      
+      - name: Generate Audio Files (with M4A conversion)
+        run: |
+          chmod +x __scripts/synthesize-audio.sh
+          __scripts/synthesize-audio.sh || echo "Audio generation failed, but continuing..."
+      
+      - name: Checkout Timers Branch to Subdirectory
+        run: |
+          # Create timers directory
+          mkdir -p timers-branch
+          
+          # Try to clone the timers branch into the subdirectory
+          # Use GITHUB_TOKEN for authentication
+          REPO_URL="https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          git clone --branch timers --single-branch "$REPO_URL" timers-branch || {
+            # If branch doesn't exist yet, create an empty directory structure
+            mkdir -p timers-branch/timer-audio
+            cd timers-branch
+            git init
+            git checkout -b timers
+            git config user.name "GitHub Actions Bot"
+            git config user.email "actions@github.com"
+            touch timer-audio/.gitkeep
+            git add timer-audio/
+            git commit -m "Initialize timers branch"
+            cd ..
+          }
+      
+      - name: Update Timers Branch
+        run: |
+          # Copy generated files to the timers branch directory
+          cp phrases.json timers-branch/
+          mkdir -p timers-branch/timer-audio
+          find timer-audio -name "*.m4a" -type f -exec cp {} timers-branch/timer-audio/ \; 2>/dev/null || true
+          
+          # Add and commit changes
+          cd timers-branch
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add phrases.json timer-audio/
+          
+          # Only commit if there are changes
+          git diff --staged --quiet || git commit -m "Update timer audio files [skip ci]"
+          
+          # Push changes
+          git push "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" timers
