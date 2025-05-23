@@ -1,0 +1,100 @@
+name: Generate Timer Audio Files
+
+on:
+  push:
+    branches:
+      - main
+      - feature/timers
+    paths:
+      - '*.cook'
+      - '*.cooklang'
+      - '.github/workflows/timer-audio.yml'
+      - '__scripts/*.sh'
+  workflow_dispatch:
+    inputs:
+      force_regenerate:
+        description: 'Force regenerate all audio files'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  generate-audio:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120  # Increased timeout to 2 hours
+    steps:
+      - name: Checkout main repository
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Setup Git for timer branch
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Checkout timer branch as subfolder
+        run: |
+          git fetch origin timers:timers || git checkout --orphan timers
+          git worktree add timers timers || (mkdir -p timers && echo "Created new timers branch")
+
+      - name: Make scripts executable
+        run: chmod +x __scripts/*.sh
+
+      - name: Test Extract Timer Phrases
+        run: |
+          # Run the test script via Nix to ensure cook-cli is available
+          nix shell nixpkgs#cook-cli nixpkgs#jq -c bash -c "__scripts/test_extract_phrases.sh"
+
+      - name: Extract Timer Phrases for All Recipes
+        run: |
+          mkdir -p timers
+          
+          # Process each recipe file
+          for recipe in *.cook; do
+            # Run the extraction script via Nix
+            nix shell nixpkgs#cook-cli nixpkgs#jq -c bash -c "__scripts/extract_timer_phrases.sh \"$recipe\" \"/tmp/phrases_${recipe}.json\""
+          done
+          
+          # Merge all phrase files
+          echo "{}" > timers/phrases.json
+          for phrase_file in /tmp/phrases_*.json; do
+            if [ -f "$phrase_file" ]; then
+              # Merge with existing phrases
+              nix run nixpkgs#jq -- -s '.[0] * .[1]' timers/phrases.json "$phrase_file" > /tmp/merged.json
+              mv /tmp/merged.json timers/phrases.json
+            fi
+          done
+          
+          echo "Extracted timer phrases to timers/phrases.json"
+
+      - name: Generate Audio Files
+        run: |
+          mkdir -p timers/audio
+          
+          # Check if force regeneration is enabled
+          FORCE_REGENERATE="${{ github.event.inputs.force_regenerate || 'false' }}"
+          
+          # Run the audio generation script via Nix
+          nix shell github:andoriyu/flakes#bark nixpkgs#ffmpeg nixpkgs#jq -c bash -c \
+            "__scripts/generate_audio.sh timers/phrases.json timers/audio $FORCE_REGENERATE"
+
+      - name: Generate Index File
+        run: |
+          # Run the index generation script via Nix
+          nix shell nixpkgs#jq -c bash -c \
+            "__scripts/generate_index.sh timers/phrases.json audio timers/index.json"
+
+      - name: Commit and Push Changes
+        run: |
+          cd timers
+          git add phrases.json audio/ index.json
+          
+          if git status --porcelain | grep .; then
+            git commit -m "timer(audio): update timer audio files"
+            git push origin timers
+            echo "Changes committed and pushed to timers branch"
+          else
+            echo "No changes to commit"
+          fi
