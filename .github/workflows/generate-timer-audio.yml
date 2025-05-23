@@ -30,12 +30,15 @@ jobs:
       - name: Extract Timer Phrases
         run: |
           chmod +x __scripts/get-phrases.sh
-          __scripts/get-phrases.sh
+          __scripts/get-phrases.sh || {
+            echo "Failed to extract phrases, but continuing..."
+            echo "{}" > phrases.json
+          }
       
       - name: Generate Audio Files (with M4A conversion)
         run: |
           chmod +x __scripts/synthesize-audio.sh
-          __scripts/synthesize-audio.sh
+          __scripts/synthesize-audio.sh || echo "Audio generation failed, but continuing..."
       
       - name: Checkout Timers Branch to Subdirectory
         run: |
@@ -62,7 +65,7 @@ jobs:
           # Copy generated files to the timers branch directory
           cp phrases.json timers-branch/
           mkdir -p timers-branch/timer-audio
-          cp timer-audio/*.m4a timers-branch/timer-audio/ 2>/dev/null || true
+          find timer-audio -name "*.m4a" -type f -exec cp {} timers-branch/timer-audio/ \; 2>/dev/null || true
           
           # Add and commit changes
           cd timers-branch

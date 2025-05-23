@@ -42,6 +42,12 @@ shift $((OPTIND - 1))
 mkdir -p "$OUT_DIR"
 count=0
 
+# Check if the JSON file has content
+if [ ! -s "$PHRASES_FILE" ] || [ "$(jq 'length' "$PHRASES_FILE")" = "0" ]; then
+  echo "No phrases found in $PHRASES_FILE, skipping audio generation"
+  exit 0
+fi
+
 # Iterate over key\tphrase pairs from JSON
 jq -r 'to_entries[] | "\(.key)\t\(.value)"' "$PHRASES_FILE" | \
 while IFS=$'\t' read -r key phrase; do

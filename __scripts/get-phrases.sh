@@ -7,10 +7,11 @@ OUT_FILE="phrases.json"
 # Start with empty JSON
 : > "$OUT_FILE"
 
-# Find all .cook files in the repository
-find . -name "*.cook" -o -name "*.cooklang" | \
-while IFS= read -r file; do
-  nix run nixpkgs#cooklang-cli --override-input nixpkgs nixpkgs/nixos-unstable -- recipe -f json "$file" | \
+# Find all .cook files in the repository and handle spaces in filenames
+find . \( -name "*.cook" -o -name "*.cooklang" \) -print0 | \
+while IFS= read -r -d '' file; do
+  # Use proper flake syntax for nixpkgs/nixos-unstable
+  nix run --impure nixpkgs/nixos-unstable#cooklang-cli -- recipe -f json "$file" | \
   jq -c '
     # For each timer (or empty if none)
     (.timers // [])[] 
@@ -41,7 +42,7 @@ while IFS= read -r file; do
     |
     { ($key): $phrase }
   '
-done | jq -s 'add' > "$OUT_FILE"
+done | jq -s 'add // {}' > "$OUT_FILE"
 
 # Print summary
 count=$(jq 'keys | length' "$OUT_FILE")
