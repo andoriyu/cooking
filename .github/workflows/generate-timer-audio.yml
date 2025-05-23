@@ -26,7 +26,10 @@ jobs:
       - name: Install Dependencies
         run: |
           nix-env -iA nixpkgs.jq nixpkgs.ffmpeg
-          nix-env -f https://github.com/cachix/devenv/tarball/latest -iA default
+          # Install cooklang-cli for parsing cook files
+          nix-channel --add https://nixos.org/channels/nixpkgs-unstable
+          nix-channel --update
+          nix-env -iA nixpkgs.cooklang-cli
       
       - name: Checkout Timers Branch
         run: |
