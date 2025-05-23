@@ -19,7 +19,7 @@
             cd ${self}
             # Execute the original script, passing the recipes directory as an argument
             ./get-phrases.sh "."
-          ''}/bin/generate-phrases-script);
+          '') + "/bin/generate-phrases-script";
           
           # Define dependencies needed by the script when it runs
           meta.mainProgram = "generate-phrases-script";
