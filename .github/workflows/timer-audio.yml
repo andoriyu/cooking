@@ -41,8 +41,8 @@ jobs:
         run: |
           mkdir -p timers/audio
           
-          # Extract phrases using cooklang-cli via Nix
-          nix run nixpkgs#cooklang-cli -- recipe -f json *.cook | \
+          # Extract phrases using cook-cli via Nix from nixpkgs-unstable
+          nix run nixpkgs/nixpkgs-unstable#cook-cli -- recipe -f json *.cook | \
           jq -c '
             # For each timer (or empty if none)
             (.timers // [])[] 
