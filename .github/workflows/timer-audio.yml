@@ -1,0 +1,127 @@
+name: Generate Timer Audio Files
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '*.cook'
+      - '*.cooklang'
+      - '.github/workflows/timer-audio.yml'
+
+jobs:
+  generate-audio:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main repository
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Setup Git for timer branch
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Checkout timer branch as subfolder
+        run: |
+          git fetch origin timers:timers
+          git worktree add timers timers
+
+      - name: Extract Timer Phrases
+        run: |
+          mkdir -p timers/audio
+          
+          # Extract phrases using cooklang-cli via Nix
+          nix run nixpkgs#cooklang-cli -- recipe -f json *.cook | \
+          jq -c '
+            # For each timer (or empty if none)
+            (.timers // [])[] 
+            |
+            # Compute raw duration:
+            ( if .quantity.value.type == "text" then
+                (.quantity.value.value | split("-")[0])
+              else
+                (.quantity.value.value.value) as $n
+                | if ($n|floor)==$n then ($n|floor|tostring) else ($n|tostring) end
+              end
+            ) as $dur
+            |
+            # Grab unit and (optional) name
+            .quantity.unit as $unit
+            | (.name // "") as $name
+            |
+            # Build the key: name|dur|unit
+            ($name + "|" + $dur + "|" + $unit) as $key
+            |
+            # Build the phrase
+            ( if $name != "" then
+                "Chef, your " + $name + " timer is done."
+              else
+                "Chef, your " + $dur + " " + $unit + " timer is done."
+              end
+            ) as $phrase
+            |
+            { ($key): $phrase }
+          ' | jq -s 'add' > timers/phrases.json
+          
+          echo "Extracted timer phrases to timers/phrases.json"
+
+      - name: Generate Audio Files
+        run: |
+          # Generate audio files for each phrase
+          jq -r 'to_entries[] | "\(.key)\t\(.value)"' timers/phrases.json | \
+          while IFS=$'\t' read -r key phrase; do
+            # Build filename slug: replace '|' with '_'
+            slug=$(printf "%s" "$key" | tr '|' '_')
+            out="timers/audio/${slug}.m4a"
+            
+            # Skip if file already exists
+            if [ -f "$out" ]; then
+              echo "Skipping existing file: $out"
+              continue
+            fi
+            
+            echo "Generating audio for: $phrase"
+            
+            # Generate WAV using Bark via Nix and convert directly to M4A
+            nix run github:andoriyu/flakes#bark -- \
+              --text="$phrase" \
+              --output_filename="temp.wav"
+            
+            # Convert to M4A using ffmpeg via Nix
+            nix run nixpkgs#ffmpeg -- -hide_banner -loglevel error -y \
+              -i "temp.wav" \
+              -c:a aac \
+              -b:a 128k \
+              -movflags +faststart \
+              "$out"
+            
+            # Clean up temporary WAV file
+            rm -f temp.wav
+          done
+          
+          echo "Audio generation complete"
+
+      - name: Generate Index File
+        run: |
+          # Create an index file with paths relative to repo root
+          jq -r 'to_entries[] | .key + "\t" + "audio/" + (.key | gsub("\\|"; "_")) + ".m4a"' timers/phrases.json | \
+          jq -R 'split("\t") | {key: .[0], path: .[1]}' | \
+          jq -s '{timers: .}' > timers/index.json
+          
+          echo "Generated index file at timers/index.json"
+
+      - name: Commit and Push Changes
+        run: |
+          cd timers
+          git add phrases.json audio/ index.json
+          
+          if git status --porcelain | grep .; then
+            git commit -m "timer(audio): update timer audio files"
+            git push origin timers
+            echo "Changes committed and pushed to timers branch"
+          else
+            echo "No changes to commit"
+          fi
