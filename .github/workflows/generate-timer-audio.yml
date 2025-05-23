@@ -46,7 +46,9 @@ jobs:
           mkdir -p timers-branch
           
           # Try to clone the timers branch into the subdirectory
-          git clone --branch timers --single-branch $(git config --get remote.origin.url) timers-branch || {
+          # Use GITHUB_TOKEN for authentication
+          REPO_URL="https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          git clone --branch timers --single-branch "$REPO_URL" timers-branch || {
             # If branch doesn't exist yet, create an empty directory structure
             mkdir -p timers-branch/timer-audio
             cd timers-branch
@@ -77,4 +79,4 @@ jobs:
           git diff --staged --quiet || git commit -m "Update timer audio files [skip ci]"
           
           # Push changes
-          git push origin timers
+          git push "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" timers

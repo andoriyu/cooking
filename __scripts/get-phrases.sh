@@ -8,10 +8,10 @@ OUT_FILE="phrases.json"
 : > "$OUT_FILE"
 
 # Find all .cook files in the repository and handle spaces in filenames
-find . \( -name "*.cook" -o -name "*.cooklang" \) -print0 | \
-while IFS= read -r -d '' file; do
+find . \( -name "*.cook" -o -name "*.cooklang" \) -print | \
+while IFS= read -r file; do
   # Use proper flake syntax for nixpkgs/nixos-unstable
-  nix run --impure nixpkgs/nixos-unstable#cooklang-cli -- recipe -f json "$file" | \
+  nix --experimental-features "nix-command flakes" run "nixpkgs/nixos-unstable#cooklang-cli" -- recipe -f json "$file" | \
   jq -c '
     # For each timer (or empty if none)
     (.timers // [])[] 
