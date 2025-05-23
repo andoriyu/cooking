@@ -4,10 +4,12 @@ on:
   push:
     branches:
       - main
+      - 'copilot/**'  # Run on all copilot branches for testing
     paths:
       - '**.cook'
       - '**.cooklang'
       - '__scripts/**'
+      - '.github/workflows/generate-timer-audio.yml'
   workflow_dispatch:
 
 jobs:
