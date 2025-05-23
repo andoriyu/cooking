@@ -34,15 +34,19 @@ jobs:
 
       - name: Checkout timer branch as subfolder
         run: |
-          git fetch origin timers:timers
-          git worktree add timers timers
+          git fetch origin timers:timers || git checkout --orphan timers
+          git worktree add timers timers || (mkdir -p timers && echo "Created new timers branch")
 
       - name: Extract Timer Phrases
         run: |
           mkdir -p timers/audio
           
-          # Extract phrases using cook-cli via Nix from nixpkgs-unstable
-          nix run nixpkgs/nixpkgs-unstable#cook-cli -- recipe -f json *.cook | \
+          # Set shell options to fail on error
+          set -eo pipefail
+          
+          # Extract phrases using cook-cli via Nix
+          # Using nixpkgs#cooklang-cli instead of cook-cli
+          nix run nixpkgs#cooklang-cli -- recipe -f json *.cook | \
           jq -c '
             # For each timer (or empty if none)
             (.timers // [])[] 
@@ -78,6 +82,9 @@ jobs:
 
       - name: Generate Audio Files
         run: |
+          # Set shell options to fail on error
+          set -eo pipefail
+          
           # Check if force regeneration is enabled
           FORCE_REGENERATE="${{ github.event.inputs.force_regenerate || 'false' }}"
           
@@ -117,6 +124,9 @@ jobs:
 
       - name: Generate Index File
         run: |
+          # Set shell options to fail on error
+          set -eo pipefail
+          
           # Create an index file with paths relative to repo root
           jq -r 'to_entries[] | .key + "\t" + "audio/" + (.key | gsub("\\|"; "_")) + ".m4a"' timers/phrases.json | \
           jq -R 'split("\t") | {key: .[0], path: .[1]}' | \
@@ -126,6 +136,9 @@ jobs:
 
       - name: Commit and Push Changes
         run: |
+          # Set shell options to fail on error
+          set -eo pipefail
+          
           cd timers
           git add phrases.json audio/ index.json
           
