@@ -10,7 +10,7 @@ OUT_FILE="phrases.json"
 # Find all .cook files in the repository
 find . -name "*.cook" -o -name "*.cooklang" | \
 while IFS= read -r file; do
-  nix run nixpkgs#cooklang-cli -- recipe -f json "$file" | \
+  nix run nixpkgs#cooklang-cli --override-input nixpkgs nixpkgs/nixos-unstable -- recipe -f json "$file" | \
   jq -c '
     # For each timer (or empty if none)
     (.timers // [])[] 
