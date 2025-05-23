@@ -4,10 +4,18 @@ on:
   push:
     branches:
       - main
+      - feature/timers
     paths:
       - '*.cook'
       - '*.cooklang'
       - '.github/workflows/timer-audio.yml'
+  workflow_dispatch:
+    inputs:
+      force_regenerate:
+        description: 'Force regenerate all audio files'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   generate-audio:
@@ -70,6 +78,9 @@ jobs:
 
       - name: Generate Audio Files
         run: |
+          # Check if force regeneration is enabled
+          FORCE_REGENERATE="${{ github.event.inputs.force_regenerate || 'false' }}"
+          
           # Generate audio files for each phrase
           jq -r 'to_entries[] | "\(.key)\t\(.value)"' timers/phrases.json | \
           while IFS=$'\t' read -r key phrase; do
@@ -77,8 +88,8 @@ jobs:
             slug=$(printf "%s" "$key" | tr '|' '_')
             out="timers/audio/${slug}.m4a"
             
-            # Skip if file already exists
-            if [ -f "$out" ]; then
+            # Skip if file already exists and not forcing regeneration
+            if [ -f "$out" ] && [ "$FORCE_REGENERATE" != "true" ]; then
               echo "Skipping existing file: $out"
               continue
             fi
