@@ -7,8 +7,8 @@ set -eo pipefail
 # Create output directory if it doesn't exist
 mkdir -p "$(dirname "$2")"
 
-# Extract phrases using cook-cli
-cook-cli recipe -f json "$1" | \
+# Extract phrases using cook (from cook-cli package)
+cook recipe -f json "$1" | \
 jq -c '
   # For each timer (or empty if none)
   (.timers // [])[] 
