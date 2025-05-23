@@ -22,14 +22,8 @@ jobs:
         uses: cachix/install-nix-action@v23
         with:
           nix_path: nixpkgs=channel:nixos-unstable
-      
-      - name: Install Dependencies
-        run: |
-          nix-env -iA nixpkgs.jq nixpkgs.ffmpeg
-          # Install cooklang-cli for parsing cook files
-          nix-channel --add https://nixos.org/channels/nixpkgs-unstable
-          nix-channel --update
-          nix-env -iA nixpkgs.cooklang-cli
+          extra_nix_config: |
+            experimental-features = nix-command flakes
       
       - name: Checkout Timers Branch
         run: |
@@ -46,15 +40,13 @@ jobs:
       
       - name: Extract Timer Phrases
         run: |
+          chmod +x __scripts/get-phrases.sh
           __scripts/get-phrases.sh
       
-      - name: Generate Audio Files
+      - name: Generate Audio Files (with M4A conversion)
         run: |
-          __scripts/synthesize-phrases.sh
-      
-      - name: Convert Audio Files
-        run: |
-          __scripts/convert-wav-to-m4a.sh
+          chmod +x __scripts/synthesize-audio.sh
+          __scripts/synthesize-audio.sh
       
       - name: Push to Timers Branch
         run: |
