@@ -21,6 +21,7 @@ on:
 jobs:
   generate-audio:
     runs-on: ubuntu-latest
+    timeout-minutes: 120  # Increased timeout to 2 hours
     steps:
       - name: Checkout main repository
         uses: actions/checkout@v4
