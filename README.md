@@ -37,6 +37,13 @@ Explore [the docs](https://cooklang.org/cli/help/), which describe how to use Co
 
 Add aisle configuration information to the `config/aisle.conf` file to tailor your shopping list experience.
 
+### Generate phrases for timers
 
+To generate the `phrases.json` file containing timer phrases from all recipes:
 
+```sh
+nix run .#generate-phrases
+```
+
+This command uses Nix to ensure all dependencies are available and runs the phrase generation script from the repository root.
 
