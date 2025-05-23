@@ -1,0 +1,77 @@
+name: Generate Timer Audio Files
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '**.cook'
+      - '**.cooklang'
+      - '__scripts/**'
+  workflow_dispatch:
+
+jobs:
+  generate-audio:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+      
+      - name: Setup Nix
+        uses: cachix/install-nix-action@v23
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+      
+      - name: Install Dependencies
+        run: |
+          nix-env -iA nixpkgs.jq nixpkgs.ffmpeg
+          nix-env -f https://github.com/cachix/devenv/tarball/latest -iA default
+      
+      - name: Checkout Timers Branch
+        run: |
+          # Create a local timers branch that tracks the remote one (if it exists)
+          git fetch origin timers:timers || true
+          git checkout timers || git checkout --orphan timers
+          # Clean the working tree if we created a new orphan branch
+          if [[ "$(git rev-parse --verify HEAD 2>/dev/null || echo empty)" == "empty" ]]; then
+            git rm -rf . || true
+            git clean -fxd
+          fi
+          # Return to main branch for processing
+          git checkout ${GITHUB_REF#refs/heads/}
+      
+      - name: Extract Timer Phrases
+        run: |
+          __scripts/get-phrases.sh
+      
+      - name: Generate Audio Files
+        run: |
+          __scripts/synthesize-phrases.sh
+      
+      - name: Convert Audio Files
+        run: |
+          __scripts/convert-wav-to-m4a.sh
+      
+      - name: Push to Timers Branch
+        run: |
+          # Switch to timers branch
+          git checkout timers
+          
+          # Create audio directory if it doesn't exist
+          mkdir -p timer-audio
+          
+          # Copy generated files
+          cp phrases.json timer-audio/
+          cp timer-audio/*.m4a timer-audio/ 2>/dev/null || true
+          
+          # Add and commit changes
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add timer-audio/
+          
+          # Only commit if there are changes
+          git diff --staged --quiet || git commit -m "Update timer audio files [skip ci]"
+          
+          # Push changes
+          git push origin timers

@@ -59,3 +59,22 @@ list-image-domains:
     
     echo ""
     echo "Done listing unique image domains."
+
+# Extract timer phrases from all recipes
+extract-timer-phrases:
+    @@echo "Extracting timer phrases from recipes..."
+    @@__scripts/get-phrases.sh
+
+# Generate audio files for timer phrases
+generate-timer-audio: extract-timer-phrases
+    @@echo "Generating audio files for timer phrases..."
+    @@__scripts/synthesize-phrases.sh
+
+# Convert WAV files to M4A format
+convert-timer-audio: generate-timer-audio
+    @@echo "Converting audio files to M4A format..."
+    @@__scripts/convert-wav-to-m4a.sh
+
+# Complete timer audio generation pipeline
+timer-audio-pipeline: extract-timer-phrases generate-timer-audio convert-timer-audio
+    @@echo "Timer audio pipeline completed successfully."
