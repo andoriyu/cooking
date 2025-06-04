@@ -71,5 +71,10 @@
       checks = {
         inherit pre-commit-check;
       };
+
+      # Omnix CI configuration
+      om.ci.default = {
+        root.dir = ".";
+      };
     });
 }
