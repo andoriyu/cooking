@@ -25,7 +25,7 @@ jobs:
           diagnostic-endpoint: false
 
       # Cache and restore Nix build results with FlakeHub
-      - uses: DeterminateSystems/flakehub-cache-action@v9
+      - uses: DeterminateSystems/flakehub-cache-action@main
 
       # Install Omnix
       - name: Install Omnix
@@ -56,7 +56,7 @@ jobs:
           diagnostic-endpoint: false
 
       # Cache and restore Nix build results with FlakeHub
-      - uses: DeterminateSystems/flakehub-cache-action@v9
+      - uses: DeterminateSystems/flakehub-cache-action@main
 
       # Install Omnix
       - name: Install Omnix
