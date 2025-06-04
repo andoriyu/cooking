@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  pre-commit-checks:
+  omnix-ci:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.2.2
@@ -19,22 +19,13 @@ jobs:
       # Cache and restore Nix build results
       - uses: DeterminateSystems/magic-nix-cache-action@v9
 
-      # Run pre-commit checks (alejandra, nix flake check, shellcheck, actionlint)
-      - name: Run pre-commit checks
-        run: nix flake check
+      # Install Omnix
+      - name: Install Omnix
+        run: nix --accept-flake-config profile install "github:juspay/omnix"
 
-  smoke-test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4.2.2
-
-      # Install Nix
-      - uses: DeterminateSystems/nix-installer-action@v17
-        with:
-          diagnostic-endpoint: false
-
-      # Cache and restore Nix build results
-      - uses: DeterminateSystems/magic-nix-cache-action@v9
+      # Run comprehensive CI with Omnix (builds all outputs, runs checks, etc.)
+      - name: Run Omnix CI
+        run: om ci
 
       # Smoke test: run script against `tests/smoke.cook`
       - name: Run smoke test
