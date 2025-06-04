@@ -4,6 +4,33 @@
 * Add your own recipes. Dive into the Cook ecoysystem and discover how easy it is to write in CookLang. It's the best way to learn the [CookLang syntax](https://cooklang.org/docs/spec/).
 * Check out our [tips and tricks](https://cooklang.org/docs/best-practices/) page.
 
+## Recipe Frontmatter Validation
+
+This repository includes validation for recipe YAML frontmatter to ensure consistency across all recipe files. The validation is implemented using POSIX shell scripts for maximum compatibility and is automatically run as a pre-commit hook.
+
+### Manual Validation
+
+```sh
+# Validate all .cook files
+./scripts/validate-frontmatter.sh
+
+# Validate specific files
+./scripts/validate-frontmatter.sh recipes/pasta/*.cook
+
+# View validation rules
+cat .grit/frontmatter-schema.md
+```
+
+### Pre-commit Hook
+
+The validation runs automatically on staged `.cook` files when you commit. To set up the development environment with pre-commit hooks:
+
+```sh
+nix develop
+```
+
+This ensures all recipe files follow the required frontmatter schema before being committed.
+
 ## Generate Timer Phrases
 
 This repository includes a utility to extract timer information from Cooklang recipe files and generate notification phrases for cooking assistants.
