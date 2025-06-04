@@ -40,7 +40,7 @@ fi
 # Process recipe files
 find "$RECIPES_DIR" -type f \( -name '*.cook' -o -name '*.cooklang' \) | \
 while IFS= read -r file; do
-    echo "Processing: $file"
+    echo "Processing: $file" >&2
     
     # Extract timer information and generate phrases
     if ! cook recipe -f json "$file" | \
