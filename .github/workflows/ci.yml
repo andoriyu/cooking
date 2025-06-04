@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  pre-commit-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Install Nix
+      - uses: DeterminateSystems/nix-installer-action@v9
+        with:
+          diagnostic-endpoint: false
+
+      # Cache and restore Nix build results
+      - uses: DeterminateSystems/magic-nix-cache-action@v2
+
+      # Run pre-commit checks (alejandra, nix flake check, shellcheck)
+      - name: Run pre-commit checks
+        run: nix flake check
+
+  smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Install Nix
+      - uses: DeterminateSystems/nix-installer-action@v9
+        with:
+          diagnostic-endpoint: false
+
+      # Cache and restore Nix build results
+      - uses: DeterminateSystems/magic-nix-cache-action@v2
+
+      # Smoke test: run script against `tests/smoke.cook`
+      - name: Run smoke test
+        run: |
+          nix run . -- tests
+          echo "Generated phrases.json:"
+          jq . phrases.json
+          test "$(jq 'keys | length' phrases.json)" -gt 0

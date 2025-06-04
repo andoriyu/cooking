@@ -4,6 +4,45 @@
 * Add your own recipes. Dive into the Cook ecoysystem and discover how easy it is to write in CookLang. It's the best way to learn the [CookLang syntax](https://cooklang.org/docs/spec/).
 * Check out our [tips and tricks](https://cooklang.org/docs/best-practices/) page.
 
+## Generate Timer Phrases
+
+This repository includes a utility to extract timer information from Cooklang recipe files and generate notification phrases for cooking assistants.
+
+### Using Nix (recommended)
+
+```sh
+# Generate timer phrases from all .cook files in current directory
+nix run . -- .
+
+# Generate from specific directory
+nix run . -- recipes/
+
+# View the generated phrases
+cat phrases.json
+```
+
+### Direct execution
+
+```sh
+# Make script executable
+chmod +x scripts/generate-timer-phrases.sh
+
+# Generate timer phrases
+./scripts/generate-timer-phrases.sh tests/
+
+# Check results
+jq '.count' phrases.json
+```
+
+The utility generates a `phrases.json` file with structured timer data like:
+
+```json
+{
+  "cook_garlic|30|seconds": "Chef, your cook garlic timer is done.",
+  "simmer|10|minutes": "Chef, your 10 minutes timer is done."
+}
+```
+
 ### Read the recipe
 
 ```sh
