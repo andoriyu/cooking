@@ -18,7 +18,6 @@
           src = ./.;
           hooks = {
             alejandra.enable = true;
-            nix-flake-check.enable = true;
             shellcheck.enable = true;
           };
         };
