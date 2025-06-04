@@ -4,12 +4,24 @@
   inputs = {
     nixpkgs.url     = "github:NixOS/nixpkgs/nixos-24.05";    # Pin to a stable release
     flake-utils.url = "github:numtide/flake-utils";
+    git-hooks.url   = "github:cachix/git-hooks.nix";
+    git-hooks.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
+  outputs = { self, nixpkgs, flake-utils, git-hooks }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
+        
+        # Configure pre-commit hooks
+        pre-commit-check = git-hooks.lib.${system}.run {
+          src = ./.;
+          hooks = {
+            alejandra.enable = true;
+            nix-flake-check.enable = true;
+            shellcheck.enable = true;
+          };
+        };
       in {
         ## 1.2.1 Package: generate-timer-phrases
         packages.generate-timer-phrases = pkgs.writeShellApplication {
@@ -21,15 +33,21 @@
         ## 1.2.2 Default package alias
         defaultPackage = self.packages.${system}.generate-timer-phrases;
 
-        ## 1.2.3 Dev shell (with Alejandra available)
+        ## 1.2.3 Dev shell (with pre-commit hooks)
         devShells.default = pkgs.mkShell {
           inputsFrom = [ self.packages.${system}.generate-timer-phrases ];
+          inherit (pre-commit-check) shellHook;
           nativeBuildInputs = [
             pkgs.shellcheck
             pkgs.bashInteractive
             pkgs.alejandra
-          ];
+          ] ++ pre-commit-check.enabledPackages;
           # Optional: add other tooling (e.g., jq, cook-cli) if you want to run locally
+        };
+
+        ## 1.2.4 Pre-commit checks
+        checks = {
+          pre-commit-check = pre-commit-check;
         };
       });
 }

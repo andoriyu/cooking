@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  format-check:
+  pre-commit-checks:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,26 +19,8 @@ jobs:
       # Cache and restore Nix build results
       - uses: DeterminateSystems/magic-nix-cache-action@v2
 
-      # Check formatting with Alejandra
-      - name: Run Alejandra fmt – check only
-        run: |
-          nix develop --command alejandra --check .
-
-  nix-check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      # Install Nix
-      - uses: DeterminateSystems/nix-installer-action@v9
-        with:
-          diagnostic-endpoint: false
-
-      # Cache and restore Nix build results
-      - uses: DeterminateSystems/magic-nix-cache-action@v2
-
-      # `nix flake check` (ensures package builds on all supported systems)
-      - name: flake check
+      # Run pre-commit checks (alejandra, nix flake check, shellcheck)
+      - name: Run pre-commit checks
         run: nix flake check
 
   smoke-test:
