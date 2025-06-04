@@ -27,6 +27,16 @@
           alejandra.enable = true;
           shellcheck.enable = true;
           statix.enable = true;
+
+          # Custom hook for recipe frontmatter validation
+          frontmatter-validation = {
+            enable = true;
+            name = "Recipe frontmatter validation";
+            entry = "/bin/sh ./scripts/validate-frontmatter-precommit.sh";
+            files = "\\.cook$";
+            language = "system";
+            description = "Validate YAML frontmatter in .cook recipe files";
+          };
         };
       };
     in {
