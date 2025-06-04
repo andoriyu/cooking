@@ -2,7 +2,7 @@
   description = "Cooking utilities – generate phrases.json from Cooklang files";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11"; # Pin to a stable release
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05"; # Pin to a stable release
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable"; # For cook-cli
     flake-utils.url = "github:numtide/flake-utils";
     git-hooks.url = "github:cachix/git-hooks.nix";
