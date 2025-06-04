@@ -4,6 +4,5 @@ pan_press_deploy_key.pub
 
 # Build artifacts
 phrases.json
-flake.lock
 result
 .direnv/
