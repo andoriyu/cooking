@@ -40,4 +40,6 @@ jobs:
       - name: Run smoke test
         run: |
           nix run . -- tests
+          echo "Generated phrases.json:"
+          jq . phrases.json
           test "$(jq 'keys | length' phrases.json)" -gt 0
