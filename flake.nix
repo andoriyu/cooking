@@ -2,7 +2,7 @@
   description = "Cooking utilities – generate phrases.json from Cooklang files";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05"; # Pin to a stable release
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05"; # Pin to a stable release
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable"; # For cook-cli
     flake-utils.url = "github:numtide/flake-utils";
     git-hooks.url = "github:cachix/git-hooks.nix";
@@ -27,6 +27,7 @@
           alejandra.enable = true;
           shellcheck.enable = true;
           statix.enable = true;
+          actionlint.enable = true;
 
           # Custom hook for recipe frontmatter validation
           frontmatter-validation = {
@@ -60,6 +61,7 @@
             pkgs.bashInteractive
             pkgs.alejandra
             pkgs.statix
+            pkgs.actionlint
           ]
           ++ pre-commit-check.enabledPackages;
         # Optional: add other tooling (e.g., jq, cook-cli) if you want to run locally
@@ -68,6 +70,11 @@
       # Pre-commit checks
       checks = {
         inherit pre-commit-check;
+      };
+
+      # Omnix CI configuration
+      om.ci.default = {
+        root.dir = ".";
       };
     });
 }

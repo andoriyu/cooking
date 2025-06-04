@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set up SSH deploy key
-        uses: webfactory/ssh-agent@v0.7.0
+        uses: webfactory/ssh-agent@v0.9.1
         with:
           ssh-private-key: ${{ secrets.PAN_PRESS_DEPLOY_KEY }}
       - name: Add GitHub to known hosts
@@ -33,11 +33,11 @@ jobs:
           # Remove the existing recipes directory in pan_press
           rm -rf pan_press/recipes
       - name: Checkout cooking repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
         with:
           path: pan_press/recipes
       - name: Install, build, and upload your site
-        uses: withastro/action@v3
+        uses: withastro/action@v4.0.0
         with:
           path: pan_press/astro
           node-version: 22
@@ -51,4 +51,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v4.0.5

@@ -5,36 +5,66 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
-  pre-commit-checks:
+  configure:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
 
       # Install Nix
-      - uses: DeterminateSystems/nix-installer-action@v9
+      - uses: DeterminateSystems/nix-installer-action@v17
         with:
           diagnostic-endpoint: false
 
-      # Cache and restore Nix build results
-      - uses: DeterminateSystems/magic-nix-cache-action@v2
+      # Cache and restore Nix build results with FlakeHub
+      - uses: DeterminateSystems/flakehub-cache-action@main
 
-      # Run pre-commit checks (alejandra, nix flake check, shellcheck)
-      - name: Run pre-commit checks
-        run: nix flake check
+      # Install Omnix
+      - name: Install Omnix
+        run: nix --accept-flake-config profile install "github:juspay/omnix"
 
-  smoke-test:
+      # Generate matrix for multiple systems
+      - id: set-matrix
+        run: |
+          set -euxo pipefail
+          MATRIX="$(om ci gh-matrix --systems=x86_64-linux | jq -c .)"
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+
+  nix:
     runs-on: ubuntu-latest
+    needs: configure
+    permissions:
+      id-token: write
+      contents: read
+    strategy:
+      matrix: ${{ fromJson(needs.configure.outputs.matrix) }}
+      fail-fast: false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
 
       # Install Nix
-      - uses: DeterminateSystems/nix-installer-action@v9
+      - uses: DeterminateSystems/nix-installer-action@v17
         with:
           diagnostic-endpoint: false
 
-      # Cache and restore Nix build results
-      - uses: DeterminateSystems/magic-nix-cache-action@v2
+      # Cache and restore Nix build results with FlakeHub
+      - uses: DeterminateSystems/flakehub-cache-action@main
+
+      # Install Omnix
+      - name: Install Omnix
+        run: nix --accept-flake-config profile install "github:juspay/omnix"
+
+      # Run comprehensive CI with Omnix for specific system
+      - name: Run Omnix CI
+        run: om ci run --systems "${{ matrix.system }}" ".#default.${{ matrix.subflake }}"
 
       # Smoke test: run script against `tests/smoke.cook`
       - name: Run smoke test

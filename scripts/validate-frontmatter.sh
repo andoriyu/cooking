@@ -56,14 +56,14 @@ validate_tags() {
     tags_section=$(echo "$frontmatter" | awk '/^tags:/{flag=1; next} /^[a-zA-Z]/ && flag{flag=0} flag{print}')
     
     if [ -z "$tags_section" ]; then
-        printf "${RED}ERROR: Required field 'tags' is missing${NC}\n" >&2
+        printf "%sERROR: Required field 'tags' is missing%s\n" "${RED}" "${NC}" >&2
         return 1
     fi
     
     # Check if we have at least one tag
     tag_count=$(echo "$tags_section" | grep -c "^[[:space:]]*-" || true)
     if [ "$tag_count" -eq 0 ]; then
-        printf "${RED}ERROR: At least one tag is required${NC}\n" >&2
+        printf "%sERROR: At least one tag is required%s\n" "${RED}" "${NC}" >&2
         return 1
     fi
     
@@ -71,8 +71,8 @@ validate_tags() {
     echo "$tags_section" | grep "^[[:space:]]*-" | while read -r line; do
         tag=$(echo "$line" | sed 's/^[[:space:]]*-[[:space:]]*//')
         if ! echo "$tag" | grep -qE "^[a-z0-9‑-]+$"; then
-            printf "${RED}ERROR: Invalid tag format: '%s'${NC}\n" "$tag" >&2
-            printf "${YELLOW}Tags must be lowercase letters, digits, or hyphens only${NC}\n" >&2
+            printf "%sERROR: Invalid tag format: '%s'%s\n" "${RED}" "$tag" "${NC}" >&2
+            printf "%sTags must be lowercase letters, digits, or hyphens only%s\n" "${YELLOW}" "${NC}" >&2
             return 1
         fi
     done
@@ -115,7 +115,7 @@ validate_time() {
     
     # Check for required prep field
     if ! echo "$time_section" | grep -q "^[[:space:]]*prep:"; then
-        printf "${RED}ERROR: Time block missing required field: prep${NC}\n" >&2
+        printf "%sERROR: Time block missing required field: prep%s\n" "${RED}" "${NC}" >&2
         return 1
     fi
     
@@ -130,13 +130,12 @@ validate_file() {
     printf "Validating: %s\n" "$file"
     
     # Extract frontmatter
-    frontmatter=$(extract_frontmatter "$file")
-    if [ $? -ne 0 ]; then
+    if ! frontmatter=$(extract_frontmatter "$file"); then
         return 1
     fi
     
     if [ -z "$frontmatter" ]; then
-        printf "${RED}ERROR: No YAML frontmatter found${NC}\n" >&2
+        printf "%sERROR: No YAML frontmatter found%s\n" "${RED}" "${NC}" >&2
         return 1
     fi
     
@@ -181,6 +180,7 @@ main() {
             exit 0
         fi
         # Convert to positional parameters
+        # shellcheck disable=SC2086
         set -- $files
     fi
     
@@ -199,10 +199,10 @@ main() {
     
     # Summary
     if [ $failed_files -eq 0 ]; then
-        printf "${GREEN}All files passed validation!${NC}\n"
+        printf "%sAll files passed validation!%s\n" "${GREEN}" "${NC}"
         exit 0
     else
-        printf "${RED}%d out of %d files failed validation${NC}\n" $failed_files $total_files >&2
+        printf "%s%d out of %d files failed validation%s\n" "${RED}" $failed_files $total_files "${NC}" >&2
         exit 1
     fi
 }
