@@ -9,32 +9,32 @@ jobs:
   pre-commit-checks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
 
       # Install Nix
-      - uses: DeterminateSystems/nix-installer-action@v9
+      - uses: DeterminateSystems/nix-installer-action@v17
         with:
           diagnostic-endpoint: false
 
       # Cache and restore Nix build results
-      - uses: DeterminateSystems/magic-nix-cache-action@v2
+      - uses: DeterminateSystems/magic-nix-cache-action@v9
 
-      # Run pre-commit checks (alejandra, nix flake check, shellcheck)
+      # Run pre-commit checks (alejandra, nix flake check, shellcheck, actionlint)
       - name: Run pre-commit checks
         run: nix flake check
 
   smoke-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
 
       # Install Nix
-      - uses: DeterminateSystems/nix-installer-action@v9
+      - uses: DeterminateSystems/nix-installer-action@v17
         with:
           diagnostic-endpoint: false
 
       # Cache and restore Nix build results
-      - uses: DeterminateSystems/magic-nix-cache-action@v2
+      - uses: DeterminateSystems/magic-nix-cache-action@v9
 
       # Smoke test: run script against `tests/smoke.cook`
       - name: Run smoke test

@@ -32,7 +32,10 @@ file_count=$(wc -l < "$temp_file")
 echo "Running frontmatter validation on $file_count staged .cook file(s)..."
 
 # Read files from temp file and pass to validation script
-exec "$(dirname "$0")/validate-frontmatter.sh" $(cat "$temp_file")
+# shellcheck disable=SC2046
+"$(dirname "$0")/validate-frontmatter.sh" $(cat "$temp_file")
+exit_code=$?
 
-# Clean up (this won't be reached due to exec, but good practice)
+# Clean up
 rm -f "$temp_file"
+exit $exit_code
