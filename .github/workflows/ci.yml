@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  nix-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # 2.1 Install Nix (matches developer)
+      - uses: DeterminateSystems/nix-installer-action@v9
+        with:
+          diagnostic-endpoint: false
+
+      # 2.2 Cache and restore Nix build results
+      - uses: DeterminateSystems/magic-nix-cache-action@v2
+
+      # 2.3 Check formatting with Alejandra
+      - name: Run Alejandra fmt – check only
+        run: |
+          nix develop --command alejandra --check .
+
+      # 2.4 `nix flake check` (ensures package builds on all supported systems)
+      - name: flake check
+        run: nix flake check
+
+      # 2.5 Smoke test: run script against `tests/smoke.cook`
+      - name: Run smoke test
+        run: |
+          nix run . -- tests
+          test "$(jq 'keys | length' phrases.json)" -gt 0
