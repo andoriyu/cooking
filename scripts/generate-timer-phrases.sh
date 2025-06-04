@@ -28,7 +28,7 @@ find "$RECIPE_DIR" -name "*.cook" -type f | while read -r cook_file; do
         cook recipe read "$cook_file" 2>/dev/null | grep -o '~[^}]*}' || true
     else
         # Fallback: extract timers using grep and sed
-        grep -o '~[^.]*[})]' "$cook_file" | sed 's/[.)]$//' || true
+        grep -o '~[^.]*{[^}]*}' "$cook_file" 2>/dev/null || true
     fi
 done | while read -r timer_line; do
     # Extract timer name and duration from formats like:
@@ -36,23 +36,32 @@ done | while read -r timer_line; do
     # ~{4-6%minutes}
     # ~sear side{4%minutes}
     
-    if echo "$timer_line" | grep -q '{.*}$'; then
-        # Extract the full timer phrase
-        timer_phrase=$(echo "$timer_line" | sed 's/^~//')
+    # Clean up the timer line - remove any trailing punctuation or extra characters
+    clean_timer=$(echo "$timer_line" | sed 's/[.,:;)]*$//' | sed 's/.*\(~[^}]*}\).*/\1/')
+    
+    if echo "$clean_timer" | grep -q '^~.*{.*}$'; then
+        # Extract the full timer phrase (remove the ~)
+        timer_phrase=$(echo "$clean_timer" | sed 's/^~//')
         
-        # Extract name (everything before the {)
-        timer_name=$(echo "$timer_phrase" | sed 's/{.*$//' | tr -d ' ')
+        # Extract name (everything before the {, clean up spaces)
+        timer_name=$(echo "$timer_phrase" | sed 's/{.*$//' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//' | tr ' ' '_')
         
         # Extract duration (everything between { and })
         timer_duration=$(echo "$timer_phrase" | grep -o '{[^}]*}' | tr -d '{}')
         
         # Skip empty names or durations
-        if [ -n "$timer_name" ] || [ -n "$timer_duration" ]; then
-            # Create a JSON entry
+        if [ -n "$timer_duration" ]; then
+            # Create a JSON entry with proper escaping
             if [ -z "$timer_name" ]; then
                 timer_name="timer"
             fi
-            echo "{\"name\":\"$timer_name\",\"duration\":\"$timer_duration\",\"phrase\":\"$timer_phrase\"}"
+            
+            # Escape quotes and backslashes for JSON
+            escaped_name=$(echo "$timer_name" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g')
+            escaped_duration=$(echo "$timer_duration" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g')
+            escaped_phrase=$(echo "$timer_phrase" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g')
+            
+            echo "{\"name\":\"$escaped_name\",\"duration\":\"$escaped_duration\",\"phrase\":\"$escaped_phrase\"}"
         fi
     fi
 done | sort -u > "$TEMP_FILE"
