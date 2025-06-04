@@ -4,10 +4,9 @@
   inputs = {
     nixpkgs.url     = "github:NixOS/nixpkgs/nixos-24.05";    # Pin to a stable release
     flake-utils.url = "github:numtide/flake-utils";
-    alejandra.url    = "github:nix-community/alejandra";     # Formatter
   };
 
-  outputs = { self, nixpkgs, flake-utils, alejandra }:
+  outputs = { self, nixpkgs, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
@@ -28,7 +27,7 @@
           nativeBuildInputs = [
             pkgs.shellcheck
             pkgs.bashInteractive
-            alejandra.packages.${system}.default
+            pkgs.alejandra
           ];
           # Optional: add other tooling (e.g., jq, cook-cli) if you want to run locally
         };
