@@ -1,0 +1,61 @@
+name: Generate Timer Audio Files
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '**.cook'
+      - '**.cooklang'
+      - 'scripts/generate-timer-phrases.sh'
+      - 'scripts/generate-timer-audio.sh'
+      - '.github/workflows/generate-timer-audio.yml'
+  pull_request:
+    paths:
+      - '**.cook'
+      - '**.cooklang'
+      - 'scripts/generate-timer-phrases.sh'
+      - 'scripts/generate-timer-audio.sh'
+      - '.github/workflows/generate-timer-audio.yml'
+  workflow_dispatch:  # Allow manual triggering
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  generate-audio:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+        
+      - name: Install Nix with FlakeHub Cache
+        uses: DeterminateSystems/determinate-nix-action@main
+        
+      - name: Setup FlakeHub Cache
+        uses: DeterminateSystems/flakehub-cache-action@main
+
+      - name: Install ffmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      # Phase 1: Use a test phrases file with just one phrase
+      - name: Create test phrases file
+        run: |
+          cat > phrases-test.json << EOF
+          {
+            "simmer|10|minutes": "Chef, your simmer timer is done."
+          }
+          EOF
+          echo "Created test phrases file:"
+          cat phrases-test.json
+
+      - name: Generate audio files
+        run: |
+          ./scripts/generate-timer-audio.sh phrases-test.json
+
+      - name: List generated audio files
+        run: |
+          find audio -type f -name "*.m4a" | sort
